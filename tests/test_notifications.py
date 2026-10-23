@@ -2,6 +2,11 @@ import json
 import pytest
 from unittest.mock import patch
 from app import app, init_db
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+# Use dates relative to today (venue time) so tests never fall into the past.
+FUTURE_DATE = (datetime.now(ZoneInfo("America/Chicago")).date() + timedelta(days=30)).isoformat()
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +62,7 @@ def test_notification_creation_and_retrieval(client):
         "/api/requests",
         data=json.dumps(
             {
-                "date": "2026-06-25",
+                "date": FUTURE_DATE,
                 "start_time": "12:00",
                 "end_time": "14:00",
                 "num_people": 4,
@@ -136,7 +141,7 @@ def test_email_preferences_check(mock_send_confirmation, client):
         "/api/requests",
         data=json.dumps(
             {
-                "date": "2026-06-25",
+                "date": FUTURE_DATE,
                 "start_time": "14:00",
                 "end_time": "16:00",
                 "num_people": 4,
@@ -169,7 +174,7 @@ def test_customer_bookings_and_cancel(client):
         "/api/requests",
         data=json.dumps(
             {
-                "date": "2026-06-25",
+                "date": FUTURE_DATE,
                 "start_time": "16:00",
                 "end_time": "18:00",
                 "num_people": 4,

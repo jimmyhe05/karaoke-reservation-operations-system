@@ -7,6 +7,9 @@ from unittest.mock import patch
 from app import app, init_db
 from services.db import get_db
 
+# Use dates relative to today (venue time) so tests never fall into the past.
+FUTURE_DATE = (real_datetime.now(ZoneInfo("America/Chicago")).date() + timedelta(days=30)).isoformat()
+
 
 @pytest.fixture(autouse=True)
 def app_context(tmp_path):
@@ -94,7 +97,7 @@ def test_google_oauth_callback_flow(mock_user_info, mock_exchange, client):
 def test_pending_request_creation_and_overlapping(client):
     # Guest cannot create request
     request_payload = {
-        "date": "2026-06-25",
+        "date": FUTURE_DATE,
         "start_time": "12:00",
         "end_time": "13:00",
         "num_people": 4,
@@ -139,7 +142,7 @@ def test_staff_approval_and_rejection_conflict_handling(client):
     # Setup two overlapping requests
     mock_login_customer(client, "bob@example.com", "Bob")
     req_payload = {
-        "date": "2026-06-25",
+        "date": FUTURE_DATE,
         "start_time": "12:00",
         "end_time": "13:00",
         "num_people": 4,
