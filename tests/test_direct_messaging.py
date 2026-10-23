@@ -2,6 +2,12 @@ import json
 import pytest
 from app import app, init_db
 from services.db import get_db
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+# Use dates relative to today (venue time) so tests never fall into the past.
+FUTURE_DATE = (datetime.now(ZoneInfo("America/Chicago")).date() + timedelta(days=30)).isoformat()
+NEXT_DAY = (datetime.now(ZoneInfo("America/Chicago")).date() + timedelta(days=31)).isoformat()
 
 
 @pytest.fixture(autouse=True)
@@ -204,9 +210,10 @@ def test_customer_edit_restrictions(client):
         INSERT INTO reservations (id, user_id, date, room_id, start_time, end_time,
                                   contact_name, contact_phone, contact_email, num_people,
                                   language, status, total_cost, deposit_paid)
-        VALUES (99, 10, '2026-07-01', 1, '12:00', '13:00', 'Owner', '555-1234',
+        VALUES (99, 10, ?, 1, '12:00', '13:00', 'Owner', '555-1234',
                 'owner@example.com', 2, 'en', 'pending', 40.0, 0.0)
-        """
+        """,
+        (FUTURE_DATE,),
     )
     conn.commit()
     conn.close()
@@ -237,7 +244,7 @@ def test_customer_edit_restrictions(client):
     # Try to update date/time
     resp = client.patch(
         "/api/reservations/99",
-        data=json.dumps({"date": "2026-07-02", "contact_name": "New Owner"}),
+        data=json.dumps({"date": NEXT_DAY, "contact_name": "New Owner"}),
         content_type="application/json",
     )
     assert resp.status_code == 400
@@ -258,7 +265,7 @@ def test_customer_edit_restrictions(client):
                 "language": "zh",
                 "notes": "some notes",
                 # Include restricted fields but with identical values (allowed)
-                "date": "2026-07-01",
+                "date": FUTURE_DATE,
                 "room_id": 1,
                 "start_time": "12:00",
                 "end_time": "13:00",
@@ -277,7 +284,7 @@ def test_customer_edit_restrictions(client):
     assert res["language"] == "zh"
     assert res["notes"] == "some notes"
     # Ensure restricted fields didn't change
-    assert res["date"] == "2026-07-01"
+    assert res["date"] == FUTURE_DATE
     assert res["room_id"] == 1
     assert res["start_time"] == "12:00"
     conn.close()
