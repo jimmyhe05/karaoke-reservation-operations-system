@@ -152,6 +152,13 @@ venv/bin/pytest
    ```bash
    python app.py seed-sample
    ```
+   For a week of demo reservations (statuses, overnight slots, and one pending request that conflicts on approval):
+   ```bash
+   python scripts/seed_demo.py --start 2026-10-28 --dry-run   # preview
+   python scripts/seed_demo.py --start 2026-10-28             # write
+   python scripts/seed_demo.py --remove                       # delete demo rows only
+   ```
+   It writes to `DATABASE_URL` when set, otherwise the local SQLite file, and only touches rows owned by its `@example.com` demo customers.
 7. **Run Development Server:**
    ```bash
    python app.py
